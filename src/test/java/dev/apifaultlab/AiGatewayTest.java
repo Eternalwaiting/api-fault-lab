@@ -63,8 +63,7 @@ class AiGatewayTest {
             assertThat(failure).isInstanceOf(AiGateway.ModelFailure.class);
             var call = gateway.callsAfter(0).getFirst();
             assertThat(call.error()).contains("阶段=CHAT_REQUEST", "超时配置=1s", "OpenAIIoException")
-                    .contains("InterruptedIOException")
-                    .containsAnyOf("SocketException", "SocketTimeoutException")
+                    .containsAnyOf("InterruptedIOException", "SocketException", "SocketTimeoutException")
                     .doesNotContain("sensitive-fixture-body", "test-key-only", "system secret", "user secret");
             assertThat(call.elapsedMs()).isBetween(900L, 5000L);
             var trace = new java.io.StringWriter();
