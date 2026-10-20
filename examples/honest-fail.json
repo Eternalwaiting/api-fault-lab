@@ -1,0 +1,12 @@
+{
+  "requirement": "前两次失败，之后恢复，客户端最多请求两次，期望恢复",
+  "manualScenario": {
+    "scenarioType": "RECOVER_AFTER_FAILURES",
+    "failureCount": 2,
+    "failureStatus": 503,
+    "responseDelayMs": 0,
+    "maxAttempts": 2,
+    "requestTimeoutMs": 1200,
+    "expectedOutcome": "RECOVERED"
+  }
+}

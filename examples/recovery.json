@@ -1,0 +1,12 @@
+{
+  "requirement": "首次503后恢复，最多请求两次，检查是否恢复",
+  "manualScenario": {
+    "scenarioType": "RECOVER_AFTER_FAILURES",
+    "failureCount": 1,
+    "failureStatus": 503,
+    "responseDelayMs": 0,
+    "maxAttempts": 2,
+    "requestTimeoutMs": 1200,
+    "expectedOutcome": "RECOVERED"
+  }
+}

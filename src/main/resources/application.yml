@@ -1,0 +1,32 @@
+server:
+  address: 127.0.0.1
+  port: ${AFL_PORT:19090}
+  tomcat:
+    max-http-form-post-size: 32KB
+    max-swallow-size: 32KB
+spring:
+  application:
+    name: api-fault-lab
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+      fail-on-null-for-primitives: true
+      fail-on-missing-creator-properties: true
+  mvc:
+    log-resolved-exception: false
+logging:
+  level:
+    org.springframework.ai: OFF
+    org.springframework.web.client: OFF
+    com.github.tomakehurst.wiremock: WARN
+    wiremock: WARN
+lab:
+  chat-base-url: ${AFL_CHAT_BASE_URL:}
+  chat-model: ${AFL_CHAT_MODEL:}
+  chat-api-key: ${AFL_CHAT_API_KEY:}
+  embedding-base-url: ${AFL_EMBEDDING_BASE_URL:}
+  embedding-model: ${AFL_EMBEDDING_MODEL:}
+  embedding-api-key: ${AFL_EMBEDDING_API_KEY:}
+  model-timeout-seconds: ${AFL_MODEL_TIMEOUT_SECONDS:45}
+  knowledge-dir: ${AFL_KNOWLEDGE_DIR:knowledge}
+  runtime-dir: ${AFL_RUNTIME_DIR:runtime}

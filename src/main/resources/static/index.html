@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<!--
+THESIS: 本地演练工作台，让需求和执行证据可以对照阅读。
+OWN-WORLD: 中性灰工作区、白色阅读面、绿色操作和红色失败提示。
+STORY: 描述故障、执行演练、查看实际请求，再核对程序断言与独立审核。
+FIRST VIEWPORT: 紧凑页头、运行状态条，左侧输入，右侧证据。
+FORM: 按交接文档限定的单页操作工具实现。
+-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'">
+  <meta name="color-scheme" content="light dark">
+  <title>API Fault Lab</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/app.css">
+  <script defer src="/vendor/lucide.min.js"></script>
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand"><i data-lucide="flask-conical" aria-hidden="true"></i><h1>API Fault Lab</h1></div>
+    <span class="local-label"><i data-lucide="lock-keyhole" aria-hidden="true"></i>本地 HTTP 演练</span>
+  </header>
+  <main>
+    <section class="environment" aria-label="运行状态">
+      <div><span class="caption">对话模型</span><strong id="chat-status">检查中</strong></div>
+      <div><span class="caption">Embedding</span><strong id="embedding-status">检查中</strong></div>
+      <div><span class="caption">知识库</span><strong id="knowledge-status">检查中</strong></div>
+      <button id="rebuild" class="secondary" type="button"><i data-lucide="refresh-cw" aria-hidden="true"></i>重建知识库</button>
+    </section>
+    <p id="global-message" class="notice" role="status" aria-live="polite" hidden></p>
+    <div class="workspace">
+      <section class="composer" aria-labelledby="input-title">
+        <h2 id="input-title">演练需求</h2>
+        <form id="drill-form">
+          <fieldset class="mode" id="mode-selector">
+            <legend class="sr-only">演练方式</legend>
+            <label><input type="radio" name="mode" value="AI" checked><span>AI 演练</span></label>
+            <label><input type="radio" name="mode" value="MANUAL"><span>手动演练</span></label>
+          <label><input type="radio" name="mode" value="READ_ONLY_REAL"><span>真实只读</span></label>
+          </fieldset>
+        <div id="drill-fields">
+          <label for="example">示例场景</label>
+          <select id="example">
+            <option value="recovery">失败后恢复</option>
+            <option value="normal">正常响应</option>
+            <option value="error">持续错误</option>
+            <option value="delay">延迟与超时</option>
+          </select>
+          <label for="requirement">需求描述</label>
+          <textarea id="requirement" rows="6" maxlength="2000" required>模拟查询订单接口：第一次返回503，第二次返回正常订单。客户端最多请求两次，检查是否恢复成功。</textarea>
+          <div class="field-footer"><span>总尝试次数包含首次请求</span><span id="char-count">0 / 2000</span></div>
+          <fieldset id="manual-fields" class="manual-fields" hidden>
+            <legend>场景配置</legend>
+            <label for="scenarioType">场景</label>
+            <select id="scenarioType">
+              <option value="RECOVER_AFTER_FAILURES">失败后恢复</option><option value="NORMAL">正常响应</option>
+              <option value="CONTINUOUS_ERROR">持续错误</option><option value="DELAY">延迟响应</option>
+            </select>
+            <div class="field-grid">
+              <div><label for="failureCount">故障次数</label><input id="failureCount" type="number" min="0" max="3" value="1"></div>
+              <div><label for="failureStatus">错误状态码</label><select id="failureStatus"><option>503</option><option>500</option><option>502</option><option>504</option></select></div>
+              <div><label for="maxAttempts">总尝试次数</label><input id="maxAttempts" type="number" min="1" max="5" value="2"></div>
+              <div><label for="requestTimeoutMs">请求超时 / ms</label><input id="requestTimeoutMs" type="number" min="100" max="5000" value="1200"></div>
+              <div><label for="responseDelayMs">响应延迟 / ms</label><input id="responseDelayMs" type="number" min="0" max="3000" value="0"></div>
+              <div><label for="expectedOutcome">预期结果</label><select id="expectedOutcome"><option value="RECOVERED">恢复成功</option><option value="SUCCESS">首次成功</option><option value="EXHAUSTED">错误耗尽</option><option value="TIMEOUT">全部超时</option></select></div>
+            </div>
+          </fieldset>
+          <div id="mode-note" class="caption">AI 配置联通状态以当次调用记录为准</div>
+          <div class="target-line"><span class="method">GET</span><code>/orders/ORD-1001</code><span class="caption">WireMock / 回环地址</span></div>
+        </div>
+        <fieldset id="readonly-fields" class="readonly-fields" hidden>
+          <legend>已核实目标</legend>
+          <p class="caption">GET /api/sensor/page；固定回环地址 127.0.0.1:8080。只读查询无需登录。</p>
+          <label for="readonly-device-id">设备 ID</label>
+          <input id="readonly-device-id" type="text" maxlength="64" autocomplete="off" spellcheck="false" placeholder="输入本地服务中的设备 ID">
+          <button id="save-readonly-target" class="secondary" type="button"><i data-lucide="save" aria-hidden="true"></i>保存本地目标</button>
+          <div class="readonly-controls">
+            <label for="readonly-count">请求次数</label>
+            <select id="readonly-count"><option value="1">1 次</option><option value="3">3 次，间隔 350ms</option></select>
+          </div>
+          <p id="readonly-target-status" class="caption" role="status">检查本地目标配置</p>
+          <p class="scope-note">响应正文和传感器值不会保存或发送给模型。目标服务可能按自身机制为每个 GET 追加访问审计记录。</p>
+        </fieldset>
+          <button id="run" class="primary" type="submit"><i data-lucide="play" aria-hidden="true"></i><span id="run-label">执行演练</span></button>
+        </form>
+      </section>
+      <section class="results" aria-labelledby="result-title" aria-busy="false">
+        <div class="result-heading"><h2 id="result-title" tabindex="-1">执行结果</h2><a id="download" class="button secondary" hidden><i data-lucide="download" aria-hidden="true"></i>导出报告</a></div>
+        <p id="completion" class="sr-only" role="status" aria-live="polite"></p>
+        <div id="pending" class="pending" role="status" hidden><div class="loading-bar"></div><p id="pending-text">演练进行中</p></div>
+        <div id="empty" class="empty"><i data-lucide="list-checks" aria-hidden="true"></i><h3>尚无演练记录</h3><p>等待提交演练</p></div>
+        <article id="report" hidden>
+          <div class="report-summary"><strong id="result-status" class="badge"></strong><span id="report-mode" class="caption"></span><span id="report-stage" class="caption"></span></div>
+          <p id="report-error" class="notice error" hidden></p>
+          <dl class="report-meta"><dt>任务</dt><dd id="task-id"></dd><dt>时间</dt><dd id="task-time"></dd><dt>原始需求</dt><dd id="task-requirement"></dd></dl>
+          <section class="evidence-section"><h3>检索来源</h3><div id="sources"></div></section>
+          <div id="rounds"></div>
+          <details class="evidence-section"><summary>模型调用记录</summary><p class="caption">脱敏元数据；Embedding 与对话调用分别统计</p><div id="model-calls"></div></details>
+          <p class="scope-note">结论仅适用于本次本地样例演练。审核状态与程序断言分别记录。</p>
+        </article>
+        <article id="readonly-report" hidden>
+          <div class="report-summary"><strong id="readonly-status" class="badge"></strong><span class="caption">真实本地只读查询 / 非故障注入</span></div>
+          <p id="readonly-error" class="notice error" hidden></p>
+          <dl class="report-meta"><dt>任务</dt><dd id="readonly-task-id"></dd><dt>目标</dt><dd id="readonly-target"></dd><dt>GET 次数</dt><dd id="readonly-request-count"></dd></dl>
+          <section class="evidence-section"><h3>请求记录</h3><div id="readonly-attempts"></div></section>
+          <section class="evidence-section"><h3>程序断言</h3><div id="readonly-assertions"></div></section>
+          <section class="evidence-section"><h3>AI 辅助解释</h3><div id="readonly-ai-assistance"></div></section>
+          <p id="readonly-side-effect" class="scope-note"></p>
+        </article>
+      </section>
+    </div>
+  </main>
+  <footer>API Fault Lab <span>Java / Spring Boot / Spring AI / WireMock</span></footer>
+</body>
+</html>
