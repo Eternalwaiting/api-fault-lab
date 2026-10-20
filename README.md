@@ -19,6 +19,23 @@
 各一例真实手动与真实只读调用；这只是具体样例，不代表普遍模型可靠性。
 图中是一次真实 AI 与本地 HTTP 演练，不代表模型普遍正确或生产系统可靠。
 
+## 下载与启动
+
+目前提供项目源码，没有预编译安装包。打开本仓库页面，选择绿色 **Code → Download ZIP**，
+解压后即可运行。需要 Windows、PowerShell 5.1+（建议 64 位）和 Java 21+；无需预先安装 Maven，
+项目启动器会在本机没有 Maven 时下载并校验 Maven。
+
+在 PowerShell 中进入解压后的项目目录并启动：
+
+```powershell
+Set-Location 'C:\path\to\api-fault-lab'
+./start.ps1
+```
+
+首次启动会构建项目并打开本地服务。没有配置 AI 时仍可使用手动故障演练；真实 AI/RAG
+需要自行配置模型服务。需要桌面快捷方式时，在项目目录运行 `./scripts/create-shortcut.ps1`，
+之后双击桌面的 `API Fault Lab.lnk` 启动。
+
 ## 快速运行
 
 Windows PowerShell 5.1+ 或 PowerShell 7+（建议使用 64 位），Java 21+（本机实测 Microsoft OpenJDK 25.0.3）。
